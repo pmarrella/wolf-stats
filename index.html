@@ -495,14 +495,15 @@ const state = {
   holes: Array.from({length: 18}, () => ({
     result: '',
     dots: '',
-    sidecar: false,
     sidecarDots: '',
     iBirdie: false, iBirdiePts: '',
     partnerBirdie: false, partnerBirdiePts: '',
     opponentBirdie: false, opponentBirdiePts: '',
     wasWolf: false,
     wolfSituation: '',
-    wolfResult: ''
+    wolfResult: '',
+    loneWolfResult: '',
+    loneWolfPts: ''
   }))
 };
 
@@ -527,6 +528,10 @@ function render() {
 
   if (subScreen && subScreen.type === 'birdies') {
     renderBirdieScreen(content, nav, subScreen.holeIdx);
+    return;
+  }
+  if (subScreen && subScreen.type === 'lonewolf') {
+    renderLoneWolfScreen(content, nav, subScreen.holeIdx);
     return;
   }
 
@@ -578,9 +583,11 @@ function renderHole(el, nav, idx) {
     {val:'win', label:'Win', icon:'&#9651;'},
     {val:'tied-win', label:'Tied win', icon:'&#9651;&#9651;'},
     {val:'tie', label:'Tie', icon:'&#9135;'},
-    {val:'loss', label:'Loss', icon:'&#9661;'}
+    {val:'loss', label:'Loss', icon:'&#9661;'},
+    {val:'sidecar', label:'Sidecar', icon:'&#9678;'}
   ];
   const showDots = h.result === 'win' || h.result === 'tied-win';
+  const showSidecarDots = h.result === 'sidecar';
 
   const situations = [
     {val:'lone', label:'Lone wolf'},
@@ -599,7 +606,7 @@ function renderHole(el, nav, idx) {
     <div class="screen-desc">What happened on this hole?</div>
     <div class="result-grid">
       ${results.map(r => `
-        <div class="result-card${h.result===r.val?' active':''}" onclick="setHoleResult(${idx},'${r.val}')">
+        <div class="result-card${h.result===r.val?' active':''}" onclick="setHoleResult(${idx},'${r.val}')" style="${r.val==='sidecar'?'grid-column: span 2;':''}">
           <span class="result-icon">${r.icon}</span>${r.label}
         </div>`).join('')}
     </div>
@@ -608,17 +615,11 @@ function renderHole(el, nav, idx) {
         <label>Dots ${h.result==='tied-win'?'(tied win)':'(win)'}</label>
         <input type="number" inputmode="numeric" placeholder="0" value="${h.dots}" oninput="state.holes[${idx}].dots=this.value">
       </div>` : ''}
-    ${h.result ? `
-      <div class="sidecar-toggle" onclick="toggleSidecar(${idx})">
-        <span>Sidecar win?</span>
-        <div class="toggle-switch${h.sidecar?' on':''}"></div>
-      </div>
-      ${h.sidecar ? `
-        <div class="dots-field" style="margin-top:8px">
-          <label>Sidecar dots</label>
-          <input type="number" inputmode="numeric" placeholder="0" value="${h.sidecarDots}" oninput="state.holes[${idx}].sidecarDots=this.value">
-        </div>` : ''}
-    ` : ''}
+    ${showSidecarDots ? `
+      <div class="dots-field">
+        <label>Sidecar points (from partner's win)</label>
+        <input type="number" inputmode="numeric" placeholder="0" value="${h.sidecarDots}" oninput="state.holes[${idx}].sidecarDots=this.value">
+      </div>` : ''}
 
     <div class="section-divider">Birdies</div>
     ${birdieButton(idx)}
@@ -639,6 +640,9 @@ function renderHole(el, nav, idx) {
           <div class="wolf-result-card${h.wolfResult===r.val?' active':''}" onclick="state.holes[${idx}].wolfResult='${r.val}';render()">${r.label}</div>
         `).join('')}
       </div>
+      ${h.wolfSituation === 'lone' ? `
+        <div style="margin-top:10px">${loneWolfButton(idx)}</div>
+      ` : ''}
     ` : ''}
   `;
   nav.innerHTML = `
@@ -723,8 +727,62 @@ function toggleWolf(idx) {
   if (!state.holes[idx].wasWolf) {
     state.holes[idx].wolfSituation = '';
     state.holes[idx].wolfResult = '';
+    state.holes[idx].loneWolfResult = '';
+    state.holes[idx].loneWolfPts = '';
   }
   render();
+}
+
+function loneWolfButton(idx) {
+  const h = state.holes[idx];
+  const set = h.loneWolfResult;
+  const label = !set ? 'Lone wolf points — tap to add' : `Lone wolf: ${set} — ${h.loneWolfPts||0} pts — tap to edit`;
+  return `
+    <div class="sidecar-toggle" onclick="openLoneWolfScreen(${idx})" style="${set?'border-color:var(--gold);':''}">
+      <span>${label}</span>
+      <span style="font-size:16px;color:var(--text-muted)">&rsaquo;</span>
+    </div>
+  `;
+}
+
+function openLoneWolfScreen(idx) {
+  subScreen = { type: 'lonewolf', holeIdx: idx };
+  render();
+  window.scrollTo(0,0);
+}
+
+function closeLoneWolfScreen() {
+  subScreen = null;
+  render();
+  window.scrollTo(0,0);
+}
+
+function renderLoneWolfScreen(el, nav, idx) {
+  const h = state.holes[idx];
+  const results = [
+    {val:'win', label:'Win'},
+    {val:'tie', label:'Tie'},
+    {val:'loss', label:'Loss'}
+  ];
+  el.innerHTML = `
+    <div class="hole-badge">${idx+1}</div>
+    <div class="screen-title">Lone wolf — Hole ${idx+1}</div>
+    <div class="screen-desc">You played the whole field alone on this hole. What happened, and how many points?</div>
+    <div class="wolf-result-grid">
+      ${results.map(r => `
+        <div class="wolf-result-card${h.loneWolfResult===r.val?' active':''}" onclick="state.holes[${idx}].loneWolfResult='${r.val}';render()">${r.label}</div>
+      `).join('')}
+    </div>
+    ${h.loneWolfResult ? `
+      <div class="birdie-points-input" style="margin-top:16px" onclick="openNumpad(${idx},'loneWolfPts')">
+        <label>Points (doubled value)</label>
+        <div style="font-size:22px;font-family:'DM Serif Display',serif;color:var(--green);text-align:right;">${h.loneWolfPts || '0'}</div>
+      </div>
+    ` : ''}
+  `;
+  nav.innerHTML = `
+    <button class="btn-next" onclick="closeLoneWolfScreen()">Back to hole &rarr;</button>
+  `;
 }
 
 function openNumpad(idx, field) {
@@ -781,12 +839,8 @@ function numpadInput(key) {
 function setHoleResult(idx, val) {
   state.holes[idx].result = val;
   if (val === 'tie' || val === 'loss') { state.holes[idx].dots = ''; }
-  render();
-}
-
-function toggleSidecar(idx) {
-  state.holes[idx].sidecar = !state.holes[idx].sidecar;
-  if (!state.holes[idx].sidecar) state.holes[idx].sidecarDots = '';
+  if (val !== 'sidecar') { state.holes[idx].sidecarDots = ''; }
+  if (val !== 'win' && val !== 'tied-win') { state.holes[idx].dots = ''; }
   render();
 }
 
@@ -799,14 +853,15 @@ function calcTotals() {
     partnerBirdies: 0, partnerBirdiePts: 0,
     opponentBirdies: 0, opponentBirdiePts: 0,
     wolfHoles: 0, wolfWin: 0, wolfTie: 0, wolfLoss: 0,
-    wolfLone: 0, wolfPartner: 0, wolfLightning: 0
+    wolfLone: 0, wolfPartner: 0, wolfLightning: 0,
+    loneWolfCount: 0, loneWolfWin: 0, loneWolfTie: 0, loneWolfLoss: 0, loneWolfPts: 0
   };
   h.forEach(x => {
     if (x.result === 'win') { t.wins++; t.winDots += parseInt(x.dots||0); }
     if (x.result === 'tied-win') { t.tiedWins++; t.tiedDots += parseInt(x.dots||0); }
     if (x.result === 'tie') t.ties++;
     if (x.result === 'loss') t.losses++;
-    if (x.sidecar) { t.sidecars++; t.sidecarDots += parseInt(x.sidecarDots||0); }
+    if (x.result === 'sidecar') { t.sidecars++; t.sidecarDots += parseInt(x.sidecarDots||0); }
     if (x.iBirdie) { t.iBirdies++; t.iBirdiePts += parseInt(x.iBirdiePts||0); }
     if (x.partnerBirdie) { t.partnerBirdies++; t.partnerBirdiePts += parseInt(x.partnerBirdiePts||0); }
     if (x.opponentBirdie) { t.opponentBirdies++; t.opponentBirdiePts += parseInt(x.opponentBirdiePts||0); }
@@ -818,8 +873,17 @@ function calcTotals() {
       if (x.wolfSituation === 'lone') t.wolfLone++;
       if (x.wolfSituation === 'partner') t.wolfPartner++;
       if (x.wolfSituation === 'lightning') t.wolfLightning++;
+      if (x.wolfSituation === 'lone' && x.loneWolfResult) {
+        t.loneWolfCount++;
+        t.loneWolfPts += parseInt(x.loneWolfPts||0);
+        if (x.loneWolfResult === 'win') t.loneWolfWin++;
+        if (x.loneWolfResult === 'tie') t.loneWolfTie++;
+        if (x.loneWolfResult === 'loss') t.loneWolfLoss++;
+      }
     }
   });
+  t.wolfWinPct = t.wolfHoles > 0 ? Math.round((t.wolfWin / t.wolfHoles) * 100) : 0;
+  t.loneWolfWinPct = t.loneWolfCount > 0 ? Math.round((t.loneWolfWin / t.loneWolfCount) * 100) : 0;
   return t;
 }
 
@@ -854,7 +918,15 @@ function renderSummary(el, nav) {
       <h3>Wolf</h3>
       <div class="summary-line"><span>Holes as Wolf</span><span class="val">${t.wolfHoles}</span></div>
       <div class="summary-line"><span>Won / Tie / Loss</span><span class="val">${t.wolfWin} / ${t.wolfTie} / ${t.wolfLoss}</span></div>
+      <div class="summary-line"><span>Win rate as Wolf</span><span class="val">${t.wolfWinPct}%</span></div>
       <div class="summary-line"><span>Lone / Partner / Lightning</span><span class="val">${t.wolfLone} / ${t.wolfPartner} / ${t.wolfLightning}</span></div>
+    </div>
+    <div class="summary-card">
+      <h3>Lone wolf</h3>
+      <div class="summary-line"><span>Times gone alone</span><span class="val">${t.loneWolfCount}</span></div>
+      <div class="summary-line"><span>Won / Tie / Loss</span><span class="val">${t.loneWolfWin} / ${t.loneWolfTie} / ${t.loneWolfLoss}</span></div>
+      <div class="summary-line"><span>Win rate alone</span><span class="val">${t.loneWolfWinPct}%</span></div>
+      <div class="summary-line"><span>Total points</span><span class="val">${t.loneWolfPts}</span></div>
     </div>
   `;
   nav.innerHTML = `
@@ -884,8 +956,8 @@ function buildRow() {
     row.push(h.result === 'tied-win' ? 1 : '');
     row.push(h.result === 'tied-win' ? (parseInt(h.dots)||0) : '');
     row.push(h.result === 'loss' ? 1 : '');
-    row.push(h.sidecar ? 1 : '');
-    row.push(h.sidecar ? (parseInt(h.sidecarDots)||0) : '');
+    row.push(h.result === 'sidecar' ? 1 : '');
+    row.push(h.result === 'sidecar' ? (parseInt(h.sidecarDots)||0) : '');
     row.push(h.iBirdie ? 1 : '');
     row.push(h.iBirdie ? (parseInt(h.iBirdiePts)||0) : '');
     row.push(h.partnerBirdie ? 1 : '');
@@ -895,6 +967,8 @@ function buildRow() {
     row.push(h.wasWolf ? 1 : '');
     row.push(h.wasWolf ? h.wolfSituation : '');
     row.push(h.wasWolf ? h.wolfResult : '');
+    row.push(h.wolfSituation === 'lone' ? h.loneWolfResult : '');
+    row.push(h.wolfSituation === 'lone' ? (parseInt(h.loneWolfPts)||0) : '');
   }
   return row;
 }
@@ -954,12 +1028,14 @@ function resetApp() {
   state.step = 0;
   state.date = ''; state.course = ''; state.tees = ''; state.players = '';
   state.holes = Array.from({length:18},()=>({
-    result:'', dots:'', sidecar:false, sidecarDots:'',
+    result:'', dots:'', sidecarDots:'',
     iBirdie:false, iBirdiePts:'',
     partnerBirdie:false, partnerBirdiePts:'',
     opponentBirdie:false, opponentBirdiePts:'',
-    wasWolf:false, wolfSituation:'', wolfResult:''
+    wasWolf:false, wolfSituation:'', wolfResult:'',
+    loneWolfResult:'', loneWolfPts:''
   }));
+  subScreen = null;
   render();
 }
 
