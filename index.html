@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Wolf Stats">
+<title>Wolf Stats</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #1a3a2a;
+    --green-mid: #2d5a3d;
+    --green-light: #4a8c5c;
+    --gold: #c9a84c;
+    --gold-light: #e8c87a;
+    --cream: #f5f0e8;
+    --cream-dark: #ede5d4;
+    --text: #1a1a1a;
+    --text-muted: #5a5a5a;
+    --white: #ffffff;
+    --radius: 12px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--green); font-family: 'DM Sans', sans-serif; color: var(--text); }
+
+  #app { min-height: 100vh; display: flex; flex-direction: column; }
+
+  .app-header {
+    background: var(--green);
+    padding: 52px 20px 16px;
+    text-align: center;
+    position: relative;
+  }
+  .app-header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    color: var(--gold);
+    letter-spacing: 0.02em;
+  }
+  .app-header .subtitle {
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .progress-wrap { padding: 0 20px 0; background: var(--green); }
+  .progress-track { height: 3px; background: rgba(255,255,255,0.15); border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--gold); border-radius: 99px; transition: width 0.4s ease; }
+  .progress-label { display: flex; justify-content: space-between; margin-top: 6px; padding-bottom: 16px; }
+  .progress-label span { font-size: 11px; color: rgba(255,255,255,0.45); }
+
+  .screen { background: var(--cream); border-radius: 20px 20px 0 0; flex: 1; padding: 24px 20px 100px; min-height: 0; }
+
+  .screen-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--green);
+    margin-bottom: 4px;
+  }
+  .screen-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; }
+
+  .field { margin-bottom: 20px; }
+  .field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--green-mid);
+    margin-bottom: 8px;
+  }
+  .field input[type="text"],
+  .field input[type="number"],
+  .field input[type="date"],
+  .field select {
+    width: 100%;
+    padding: 13px 16px;
+    border: 1.5px solid var(--cream-dark);
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    color: var(--text);
+    background: var(--white);
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .field input:focus, .field select:focus { border-color: var(--green-light); }
+
+  .chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    padding: 10px 18px;
+    border-radius: 99px;
+    border: 1.5px solid var(--cream-dark);
+    background: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .chip.active {
+    background: var(--green);
+    border-color: var(--green);
+    color: var(--gold-light);
+    font-weight: 500;
+  }
+
+  .hole-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--green);
+    color: var(--gold);
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+
+  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .result-card {
+    padding: 14px 12px;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--cream-dark);
+    background: var(--white);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 14px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .result-card.active {
+    background: var(--green);
+    border-color: var(--green);
+    color: var(--gold-light);
+  }
+  .result-card .result-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+
+  .dots-field {
+    background: var(--white);
+    border: 1.5px solid var(--gold);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-top: 16px;
+  }
+  .dots-field label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--gold);
+    display: block;
+    margin-bottom: 8px;
+  }
+  .dots-field input {
+    width: 100%;
+    border: none;
+    border-bottom: 1.5px solid var(--cream-dark);
+    padding: 6px 0;
+    font-size: 24px;
+    font-family: 'DM Serif Display', serif;
+    color: var(--green);
+    background: transparent;
+    outline: none;
+  }
+
+  .sidecar-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: var(--white);
+    border: 1.5px solid var(--cream-dark);
+    border-radius: var(--radius);
+    margin-top: 16px;
+    cursor: pointer;
+  }
+  .sidecar-toggle span { font-size: 15px; color: var(--text); }
+  .toggle-switch {
+    width: 44px; height: 26px;
+    border-radius: 99px;
+    background: var(--cream-dark);
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-switch.on { background: var(--green-light); }
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: white;
+    top: 3px; left: 3px;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .toggle-switch.on::after { transform: translateX(18px); }
+
+  .stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .stat-box {
+    background: var(--white);
+    border: 1.5px solid var(--cream-dark);
+    border-radius: var(--radius);
+    padding: 14px;
+  }
+  .stat-box label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 8px;
+  }
+  .stat-box input {
+    width: 100%;
+    border: none;
+    border-bottom: 1.5px solid var(--cream-dark);
+    padding: 4px 0;
+    font-size: 20px;
+    font-family: 'DM Serif Display', serif;
+    color: var(--green);
+    background: transparent;
+    outline: none;
+  }
+  .stat-box input:focus { border-bottom-color: var(--green-light); }
+
+  .section-divider {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--green-mid);
+    margin: 24px 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-divider::before, .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--cream-dark);
+  }
+
+  .nav-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    padding: 12px 20px 28px;
+    background: var(--cream);
+    border-top: 1px solid var(--cream-dark);
+    display: flex;
+    gap: 10px;
+    z-index: 100;
+  }
+  .btn-back {
+    padding: 14px 20px;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--cream-dark);
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--text-muted);
+    cursor: pointer;
+    flex: 0 0 auto;
+  }
+  .btn-next {
+    flex: 1;
+    padding: 14px;
+    border-radius: var(--radius);
+    border: none;
+    background: var(--green);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--gold-light);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-next:active { background: var(--green-mid); }
+  .btn-next:disabled { background: var(--cream-dark); color: var(--text-muted); cursor: default; }
+  .btn-submit {
+    flex: 1;
+    padding: 14px;
+    border-radius: var(--radius);
+    border: none;
+    background: var(--gold);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--green);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-submit:active { background: var(--gold-light); }
+
+  .summary-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1.5px solid var(--cream-dark);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .summary-card h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 16px;
+    color: var(--green);
+    margin-bottom: 12px;
+  }
+  .summary-line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--cream-dark);
+    color: var(--text);
+  }
+  .summary-line:last-child { border-bottom: none; }
+  .summary-line .val { font-weight: 500; color: var(--green-mid); }
+
+  .success-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 20px;
+    min-height: 60vh;
+  }
+  .success-icon {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: var(--green);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+  }
+  .success-icon svg { width: 36px; height: 36px; fill: none; stroke: var(--gold); stroke-width: 2.5; }
+  .success-screen h2 { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--green); margin-bottom: 8px; }
+  .success-screen p { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 24px; }
+  .btn-new-round {
+    padding: 14px 32px;
+    border-radius: var(--radius);
+    border: none;
+    background: var(--green);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--gold-light);
+    cursor: pointer;
+  }
+
+  .error-msg { font-size: 12px; color: #c0392b; margin-top: 6px; }
+  .loading-overlay {
+    position: fixed; inset: 0;
+    background: rgba(26,58,42,0.85);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 999;
+    color: var(--gold-light);
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    gap: 16px;
+  }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid rgba(201,168,76,0.3);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="app-header">
+    <h1>Wolf Stats</h1>
+    <div class="subtitle">Round Entry</div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-label">
+      <span id="progressStep">Step 1 of 22</span>
+      <span id="progressPct">0%</span>
+    </div>
+  </div>
+  <div class="screen" id="screenContent"></div>
+  <div class="nav-bar" id="navBar"></div>
+</div>
+
+<script>
+const SCRIPT_URL = 's/AKfycbwuWzVm5-gJHjVwcby-TWFpHHrdtcXrj7q4vACG1yXtVj99_Flh9-5n6ps5LzBfWn8/exec';
+
+const state = {
+  step: 0,
+  date: '',
+  course: '',
+  tees: '',
+  players: '',
+  holes: Array.from({length: 18}, () => ({
+    result: '',
+    dots: '',
+    sidecar: false,
+    sidecarDots: ''
+  })),
+  personalBirdies: '', personalBirdiePts: '',
+  opponentBirdies: '', opponentBirdiePts: '',
+  partnerBirdies: '', partnerBirdiePts: '',
+  wolfWon: '', wolfWonPts: '',
+  wolfTie: '',
+  wolfLoss: '', wolfLossPts: '',
+  wolfPickWon: '', wolfPickTie: '', wolfPickLose: ''
+};
+
+const TOTAL_STEPS = 22;
+
+function updateProgress() {
+  const pct = Math.round((state.step / (TOTAL_STEPS - 1)) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressStep').textContent = `Step ${state.step + 1} of ${TOTAL_STEPS}`;
+  document.getElementById('progressPct').textContent = pct + '%';
+}
+
+function holeIndex() { return state.step - 1; }
+
+function render() {
+  updateProgress();
+  const s = state.step;
+  const content = document.getElementById('screenContent');
+  const nav = document.getElementById('navBar');
+
+  if (s === 0) renderRoundInfo(content, nav);
+  else if (s >= 1 && s <= 18) renderHole(content, nav, s - 1);
+  else if (s === 19) renderBirdies(content, nav);
+  else if (s === 20) renderWolf(content, nav);
+  else if (s === 21) renderSummary(content, nav);
+}
+
+function chip(label, value, field, multi) {
+  const active = state[field] === value;
+  return `<div class="chip${active?' active':''}" onclick="state['${field}']='${value}';render()">${label}</div>`;
+}
+
+function renderRoundInfo(el, nav) {
+  el.innerHTML = `
+    <div class="screen-title">Round info</div>
+    <div class="screen-desc">Tell us about today's game.</div>
+    <div class="field">
+      <label>Date</label>
+      <input type="date" id="f-date" value="${state.date}" onchange="state.date=this.value">
+    </div>
+    <div class="field">
+      <label>Course</label>
+      <input type="text" id="f-course" placeholder="e.g. LR, KS" value="${state.course}" oninput="state.course=this.value.toUpperCase()" maxlength="10">
+    </div>
+    <div class="field">
+      <label>Tees</label>
+      <div class="chip-group">
+        ${['Blue','Green','White','Red','Black'].map(t => chip(t,t,'tees')).join('')}
+      </div>
+    </div>
+    <div class="field">
+      <label>Players</label>
+      <div class="chip-group">
+        ${['3','4','5'].map(n => chip(n,n,'players')).join('')}
+      </div>
+    </div>
+  `;
+  nav.innerHTML = `<button class="btn-next" onclick="goNext()" ${canAdvanceRoundInfo()?'':'disabled'}>Next &rarr;</button>`;
+}
+
+function canAdvanceRoundInfo() {
+  return state.date && state.course && state.tees && state.players;
+}
+
+function renderHole(el, nav, idx) {
+  const h = state.holes[idx];
+  const results = [
+    {val:'win', label:'Win', icon:'&#9651;'},
+    {val:'tied-win', label:'Tied win', icon:'&#9651;&#9651;'},
+    {val:'tie', label:'Tie', icon:'&#9135;'},
+    {val:'no-result', label:'No result', icon:'&#8208;'}
+  ];
+  const showDots = h.result === 'win' || h.result === 'tied-win';
+
+  el.innerHTML = `
+    <div class="hole-badge">${idx+1}</div>
+    <div class="screen-title">Hole ${idx+1}</div>
+    <div class="screen-desc">What happened on this hole?</div>
+    <div class="result-grid">
+      ${results.map(r => `
+        <div class="result-card${h.result===r.val?' active':''}" onclick="setHoleResult(${idx},'${r.val}')">
+          <span class="result-icon">${r.icon}</span>${r.label}
+        </div>`).join('')}
+    </div>
+    ${showDots ? `
+      <div class="dots-field">
+        <label>Dots ${h.result==='tied-win'?'(tied win)':'(win'+')'}</label>
+        <input type="number" inputmode="numeric" placeholder="0" value="${h.dots}" oninput="state.holes[${idx}].dots=this.value">
+      </div>` : ''}
+    ${h.result && h.result !== 'no-result' ? `
+      <div class="sidecar-toggle" onclick="toggleSidecar(${idx})">
+        <span>Sidecar win?</span>
+        <div class="toggle-switch${h.sidecar?' on':''}"></div>
+      </div>
+      ${h.sidecar ? `
+        <div class="dots-field" style="margin-top:8px">
+          <label>Sidecar dots</label>
+          <input type="number" inputmode="numeric" placeholder="0" value="${h.sidecarDots}" oninput="state.holes[${idx}].sidecarDots=this.value">
+        </div>` : ''}
+    ` : ''}
+  `;
+  nav.innerHTML = `
+    <button class="btn-back" onclick="goBack()">Back</button>
+    <button class="btn-next" onclick="goNext()" ${h.result?'':'disabled'}>Next &rarr;</button>
+  `;
+}
+
+function setHoleResult(idx, val) {
+  state.holes[idx].result = val;
+  if (val === 'tie' || val === 'no-result') { state.holes[idx].dots = ''; }
+  render();
+}
+
+function toggleSidecar(idx) {
+  state.holes[idx].sidecar = !state.holes[idx].sidecar;
+  if (!state.holes[idx].sidecar) state.holes[idx].sidecarDots = '';
+  render();
+}
+
+function numField(stateKey, label) {
+  return `<div class="stat-box">
+    <label>${label}</label>
+    <input type="number" inputmode="numeric" placeholder="0" value="${state[stateKey]}" oninput="state['${stateKey}']=this.value">
+  </div>`;
+}
+
+function renderBirdies(el, nav) {
+  el.innerHTML = `
+    <div class="screen-title">Birdies</div>
+    <div class="screen-desc">Enter birdie counts and point values for the round.</div>
+    <div class="section-divider">Personal</div>
+    <div class="stat-row">
+      ${numField('personalBirdies','Birdies')}
+      ${numField('personalBirdiePts','Points')}
+    </div>
+    <div class="section-divider">Opponents</div>
+    <div class="stat-row">
+      ${numField('opponentBirdies','Birdies')}
+      ${numField('opponentBirdiePts','Points')}
+    </div>
+    <div class="section-divider">Partners</div>
+    <div class="stat-row">
+      ${numField('partnerBirdies','Birdies')}
+      ${numField('partnerBirdiePts','Points')}
+    </div>
+  `;
+  nav.innerHTML = `
+    <button class="btn-back" onclick="goBack()">Back</button>
+    <button class="btn-next" onclick="goNext()">Next &rarr;</button>
+  `;
+}
+
+function renderWolf(el, nav) {
+  el.innerHTML = `
+    <div class="screen-title">Wolf stats</div>
+    <div class="screen-desc">Your Wolf record and pick results for the round.</div>
+    <div class="section-divider">Wolf</div>
+    <div class="stat-row">
+      ${numField('wolfWon','Won')}
+      ${numField('wolfWonPts','Won points')}
+    </div>
+    <div class="stat-row">
+      ${numField('wolfTie','Tie')}
+      ${numField('wolfLoss','Loss')}
+    </div>
+    <div class="stat-row">
+      ${numField('wolfLossPts','Loss points')}
+      <div class="stat-box"></div>
+    </div>
+    <div class="section-divider">Pick record</div>
+    <div class="stat-row">
+      ${numField('wolfPickWon','Pick won')}
+      ${numField('wolfPickTie','Pick tie')}
+    </div>
+    <div class="stat-row">
+      ${numField('wolfPickLose','Pick lose')}
+      <div class="stat-box"></div>
+    </div>
+  `;
+  nav.innerHTML = `
+    <button class="btn-back" onclick="goBack()">Back</button>
+    <button class="btn-next" onclick="goNext()">Review &rarr;</button>
+  `;
+}
+
+function renderSummary(el, nav) {
+  const h = state.holes;
+  const wins = h.filter(x=>x.result==='win').length;
+  const tiedWins = h.filter(x=>x.result==='tied-win').length;
+  const ties = h.filter(x=>x.result==='tie').length;
+  const sidecars = h.filter(x=>x.sidecar).length;
+  const winDots = h.filter(x=>x.result==='win').reduce((a,x)=>a+parseInt(x.dots||0),0);
+  const tiedDots = h.filter(x=>x.result==='tied-win').reduce((a,x)=>a+parseInt(x.dots||0),0);
+  const sidecarDots = h.filter(x=>x.sidecar).reduce((a,x)=>a+parseInt(x.sidecarDots||0),0);
+
+  el.innerHTML = `
+    <div class="screen-title">Review round</div>
+    <div class="screen-desc">Confirm everything looks right before submitting.</div>
+    <div class="summary-card">
+      <h3>Round info</h3>
+      <div class="summary-line"><span>Date</span><span class="val">${state.date}</span></div>
+      <div class="summary-line"><span>Course</span><span class="val">${state.course}</span></div>
+      <div class="summary-line"><span>Tees</span><span class="val">${state.tees}</span></div>
+      <div class="summary-line"><span>Players</span><span class="val">${state.players}</span></div>
+    </div>
+    <div class="summary-card">
+      <h3>Hole results</h3>
+      <div class="summary-line"><span>Wins</span><span class="val">${wins} holes · ${winDots} dots</span></div>
+      <div class="summary-line"><span>Tied wins</span><span class="val">${tiedWins} holes · ${tiedDots} dots</span></div>
+      <div class="summary-line"><span>Ties</span><span class="val">${ties} holes</span></div>
+      <div class="summary-line"><span>Sidecar wins</span><span class="val">${sidecars} holes · ${sidecarDots} dots</span></div>
+    </div>
+    <div class="summary-card">
+      <h3>Birdies</h3>
+      <div class="summary-line"><span>Personal</span><span class="val">${state.personalBirdies||0} · ${state.personalBirdiePts||0} pts</span></div>
+      <div class="summary-line"><span>Opponent</span><span class="val">${state.opponentBirdies||0} · ${state.opponentBirdiePts||0} pts</span></div>
+      <div class="summary-line"><span>Partner</span><span class="val">${state.partnerBirdies||0} · ${state.partnerBirdiePts||0} pts</span></div>
+    </div>
+    <div class="summary-card">
+      <h3>Wolf</h3>
+      <div class="summary-line"><span>Won / Tie / Loss</span><span class="val">${state.wolfWon||0} / ${state.wolfTie||0} / ${state.wolfLoss||0}</span></div>
+      <div class="summary-line"><span>Pick: W / T / L</span><span class="val">${state.wolfPickWon||0} / ${state.wolfPickTie||0} / ${state.wolfPickLose||0}</span></div>
+    </div>
+  `;
+  nav.innerHTML = `
+    <button class="btn-back" onclick="goBack()">Back</button>
+    <button class="btn-submit" onclick="submitRound()">Submit round</button>
+  `;
+}
+
+function goNext() {
+  if (state.step === 0 && !canAdvanceRoundInfo()) return;
+  if (state.step < TOTAL_STEPS - 1) { state.step++; render(); window.scrollTo(0,0); }
+}
+
+function goBack() {
+  if (state.step > 0) { state.step--; render(); window.scrollTo(0,0); }
+}
+
+function buildRow() {
+  const row = [
+    state.date, state.course, state.tees, state.players
+  ];
+  for (let i = 0; i < 18; i++) {
+    const h = state.holes[i];
+    row.push(h.result === 'win' ? 1 : 0);
+    row.push(h.result === 'win' ? (parseInt(h.dots)||0) : '');
+    row.push(h.result === 'tie' ? 1 : '');
+    row.push(h.result === 'tied-win' ? 1 : '');
+    row.push(h.result === 'tied-win' ? (parseInt(h.dots)||0) : '');
+    row.push(h.sidecar ? 1 : '');
+    row.push(h.sidecar ? (parseInt(h.sidecarDots)||0) : '');
+  }
+  row.push(
+    parseInt(state.personalBirdies)||0, parseInt(state.personalBirdiePts)||0,
+    parseInt(state.opponentBirdies)||0, parseInt(state.opponentBirdiePts)||0,
+    parseInt(state.partnerBirdies)||0,  parseInt(state.partnerBirdiePts)||0,
+    parseInt(state.wolfWon)||0,   parseInt(state.wolfWonPts)||0,
+    parseInt(state.wolfTie)||0,
+    parseInt(state.wolfLoss)||0,  parseInt(state.wolfLossPts)||0,
+    parseInt(state.wolfPickWon)||0, parseInt(state.wolfPickTie)||0, parseInt(state.wolfPickLose)||0
+  );
+  return row;
+}
+
+function submitRound() {
+  const overlay = document.createElement('div');
+  overlay.className = 'loading-overlay';
+  overlay.innerHTML = '<div class="spinner"></div><div>Saving round...</div>';
+  document.body.appendChild(overlay);
+
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ row: buildRow() })
+  })
+  .then(r => r.json())
+  .then(data => {
+    overlay.remove();
+    if (data.result === 'success') showSuccess();
+    else showError('Something went wrong. Please try again.');
+  })
+  .catch(() => {
+    overlay.remove();
+    showError('Could not connect. Check your internet and try again.');
+  });
+}
+
+function showSuccess() {
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('screenContent').innerHTML = `
+    <div class="success-screen">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h2>Round saved!</h2>
+      <p>Your round has been added to the Wolf Stats spreadsheet.</p>
+      <button class="btn-new-round" onclick="resetApp()">Enter another round</button>
+    </div>
+  `;
+  document.getElementById('navBar').innerHTML = '';
+}
+
+function showError(msg) {
+  const nav = document.getElementById('navBar');
+  nav.innerHTML = `
+    <div style="width:100%">
+      <div class="error-msg" style="margin-bottom:8px;text-align:center">${msg}</div>
+      <div style="display:flex;gap:10px">
+        <button class="btn-back" onclick="goBack()">Back</button>
+        <button class="btn-submit" onclick="submitRound()">Retry</button>
+      </div>
+    </div>
+  `;
+}
+
+function resetApp() {
+  state.step = 0;
+  state.date = ''; state.course = ''; state.tees = ''; state.players = '';
+  state.holes = Array.from({length:18},()=>({result:'',dots:'',sidecar:false,sidecarDots:''}));
+  state.personalBirdies=''; state.personalBirdiePts='';
+  state.opponentBirdies=''; state.opponentBirdiePts='';
+  state.partnerBirdies=''; state.partnerBirdiePts='';
+  state.wolfWon=''; state.wolfWonPts='';
+  state.wolfTie=''; state.wolfLoss=''; state.wolfLossPts='';
+  state.wolfPickWon=''; state.wolfPickTie=''; state.wolfPickLose='';
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
