@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Wolf Stats">
+<title>Wolf Stats</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #1a3a2a;
+    --green-mid: #2d5a3d;
+    --green-light: #4a8c5c;
+    --gold: #c9a84c;
+    --gold-light: #e8c87a;
+    --cream: #f5f0e8;
+    --cream-dark: #ede5d4;
+    --text: #1a1a1a;
+    --text-muted: #5a5a5a;
+    --white: #ffffff;
+    --radius: 12px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--green); font-family: 'DM Sans', sans-serif; color: var(--text); }
+
+  #app { min-height: 100vh; display: flex; flex-direction: column; }
+
+  .app-header {
+    background: var(--green);
+    padding: 52px 20px 16px;
+    text-align: center;
+    position: relative;
+  }
+  .app-header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    color: var(--gold);
+    letter-spacing: 0.02em;
+  }
+  .app-header .subtitle {
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .progress-wrap { padding: 0 20px 0; background: var(--green); }
+  .progress-track { height: 3px; background: rgba(255,255,255,0.15); border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--gold); border-radius: 99px; transition: width 0.4s ease; }
+  .progress-label { display: flex; justify-content: space-between; margin-top: 6px; padding-bottom: 16px; }
+  .progress-label span { font-size: 11px; color: rgba(255,255,255,0.45); }
+
+  .screen { background: var(--cream); border-radius: 20px 20px 0 0; flex: 1; padding: 24px 20px 100px; min-height: 0; }
+
+  .screen-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--green);
+    margin-bottom: 4px;
+  }
+  .screen-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; }
+
+  .field { margin-bottom: 20px; }
+  .field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--green-mid);
+    margin-bottom: 8px;
+  }
+  .field input[type="text"],
+  .field input[type="number"],
+  .field input[type="date"],
+  .field select {
+    width: 100%;
+    padding: 13px 16px;
+    border: 1.5px solid var(--cream-dark);
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    color: var(--text);
+    background: var(--white);
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .field input:focus, .field select:focus { border-color: var(--green-light); }
+
+  .chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    padding: 10px 18px;
+    border-radius: 99px;
+    border: 1.5px solid var(--cream-dark);
+    background: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .chip.active {
+    background: var(--green);
+    border-color: var(--green);
+    color: var(--gold-light);
+    font-weight: 500;
+  }
+
+  .hole-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--green);
+    color: var(--gold);
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+
+  .result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .result-card {
+    padding: 12px 6px;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--cream-dark);
+    background: var(--white);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+    line-height: 1.3;
+  }
+  .result-card.active {
+    background: var(--green);
+    border-color: var(--green);
+    color: var(--gold-light);
+  }
+  .result-card .result-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+
+  .dots-field {
+    background: var(--white);
+    border: 1.5px solid var(--gold);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-top: 16px;
+  }
+  .dots-field label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--gold);
+    display: block;
+    margin-bottom: 8px;
+  }
+  .dots-field input {
+    width: 100%;
+    border: none;
+    border-bottom: 1.5px solid var(--cream-dark);
+    padding: 6px 0;
+    font-size: 24px;
+    font-family: 'DM Serif Display', serif;
+    color: var(--green);
+    background: transparent;
+    outline: none;
+  }
+
+  .sidecar-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: var(--white);
+    border: 1.5px solid var(--cream-dark);
+    border-radius: var(--radius);
+    margin-top: 16px;
+    cursor: pointer;
+  }
+  .sidecar-toggle span { font-size: 15px; color: var(--text); }
+  .toggle-switch {
+    width: 44px; height: 26px;
+    border-radius: 99px;
+    background: var(--cream-dark);
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-switch.on { background: var(--green-light); }
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: white;
+    top: 3px; left: 3px;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .toggle-switch.on::after { transform: translateX(18px); }
+
+  .stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .stat-box {
+    background: var(--white);
+    border: 1.5px solid var(--cream-dark);
+    border-radius: var(--radius);
+    padding: 14px;
+  }
+  .stat-box label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 8px;
+  }
+  .stat-box input {
+    width: 100%;
+    border: none;
+    border-bottom: 1.5px solid var(--cream-dark);
+    padding: 4px 0;
+    font-size: 20px;
+    font-family: 'DM Serif Display', serif;
+    color: var(--green);
+    background: transparent;
+    outline: none;
+  }
+  .stat-box input:focus { border-bottom-color: var(--green-light); }
+
+  .section-divider {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--green-mid);
+    margin: 24px 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-divider::before, .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--cream-dark);
+  }
+
+  .nav-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    padding: 12px 20px 28px;
+    background: var(--cream);
+    border-top: 1px solid var(--cream-dark);
+    display: flex;
+    gap: 10px;
+    z-index: 100;
+  }
+  .btn-back {
+    padding: 14px 20px;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--cream-dark);
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--text-muted);
+    cursor: pointer;
+    flex: 0 0 auto;
+  }
+  .btn-next {
+    flex: 1;
+    padding: 14px;
+    border-radius: var(--radius);
+    border: none;
+    background: var(--green);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--gold-light);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-next:active { background: var(--green-mid); }
+  .btn-next:disabled { background: var(--cream-dark); color: var(--text-muted); cursor: default; }
+  .btn-submit {
+    flex: 1;
+    padding: 14px;
+    border-radius: var(--radius);
+    border: none;
+    background: var(--gold);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--green);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-submit:active { background: var(--gold-light); }
+
+  .summary-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1.5px solid var(--cream-dark);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .summary-card h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 16px;
+    color: var(--green);
+    margin-bottom: 12px;
+  }
+  .summary-line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--cream-dark);
+    color: var(--text);
+  }
+  .summary-line:last-child { border-bottom: none; }
+  .summary-line .val { font-weight: 500; color: var(--green-mid); }
+
+  .success-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 20px;
+    min-height: 60vh;
+  }
+  .success-icon {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: var(--green);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+  }
+  .success-icon svg { width: 36px; height: 36px; fill: none; stroke: var(--gold); stroke-width: 2.5; }
+  .success-screen h2 { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--green); margin-bottom: 8px; }
+  .success-screen p { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 24px; }
+  .btn-new-round {
+    padding: 14px 32px;
+    border-radius: var(--radius);
+    border: none;
+    background: var(--green);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--gold-light);
+    cursor: pointer;
+  }
+
+  .birdie-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: var(--white);
+    border: 1.5px solid var(--cream-dark);
+    border-radius: var(--radius);
+    margin-top: 8px;
+    cursor: pointer;
+  }
+  .birdie-row.active { border-color: var(--green-light); }
+  .birdie-row span { font-size: 14px; color: var(--text); }
+  .birdie-points-input {
+    margin-top: 4px;
+    margin-bottom: 4px;
+    background: var(--white);
+    border: 1.5px solid var(--green-light);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+  }
+  .birdie-points-input label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--green-mid);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .numpad-display {
+    font-size: 28px;
+    font-family: 'DM Serif Display', serif;
+    color: var(--green);
+    text-align: right;
+    padding: 4px 4px 10px;
+    border-bottom: 1.5px solid var(--cream-dark);
+    margin-bottom: 10px;
+    min-height: 36px;
+  }
+  .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .numpad-key {
+    padding: 12px 0;
+    text-align: center;
+    background: var(--cream);
+    border: 1px solid var(--cream-dark);
+    border-radius: 8px;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--green);
+    cursor: pointer;
+    user-select: none;
+  }
+  .numpad-key:active { background: var(--green); color: var(--gold-light); }
+  .numpad-key.clear { color: #c0392b; font-size: 13px; }
+
+  .wolf-situation-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 10px; }
+  .wolf-situation-card {
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--cream-dark);
+    background: var(--white);
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+  .wolf-situation-card.active { background: var(--green); border-color: var(--green); color: var(--gold-light); font-weight: 500; }
+
+  .wolf-result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+  .wolf-result-card {
+    padding: 12px 8px;
+    text-align: center;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--cream-dark);
+    background: var(--white);
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .wolf-result-card.active { background: var(--gold); border-color: var(--gold); color: var(--green); }
+
+  .error-msg { font-size: 12px; color: #c0392b; margin-top: 6px; }
+  .loading-overlay {
+    position: fixed; inset: 0;
+    background: rgba(26,58,42,0.85);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 999;
+    color: var(--gold-light);
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    gap: 16px;
+  }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid rgba(201,168,76,0.3);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="app-header">
+    <h1>Wolf Stats</h1>
+    <div class="subtitle">Round Entry</div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-label">
+      <span id="progressStep">Step 1 of 22</span>
+      <span id="progressPct">0%</span>
+    </div>
+  </div>
+  <div class="screen" id="screenContent"></div>
+  <div class="nav-bar" id="navBar"></div>
+</div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyXgE7n2EX5aqrUs34J48th64NKMj3BryANUBTQVeI6Ppbiz3uChWpWCH538z0lpj0G/exec';
+
+const state = {
+  step: 0,
+  date: '',
+  course: '',
+  tees: '',
+  players: '',
+  holes: Array.from({length: 18}, () => ({
+    result: '',
+    dots: '',
+    sidecarDots: '',
+    iBirdie: false, iBirdiePts: '',
+    partnerBirdie: false, partnerBirdiePts: '',
+    opponentBirdie: false, opponentBirdiePts: '',
+    wasWolf: false,
+    wolfResult: '',
+    isLoneWolf: false,
+    loneWolfResult: '',
+    loneWolfPts: ''
+  }))
+};
+
+const TOTAL_STEPS = 20;
+let numpadTarget = null; // {holeIdx, field}
+let subScreen = null; // {type: 'birdies', holeIdx: n}
+
+function updateProgress() {
+  const pct = Math.round((state.step / (TOTAL_STEPS - 1)) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressStep').textContent = `Step ${state.step + 1} of ${TOTAL_STEPS}`;
+  document.getElementById('progressPct').textContent = pct + '%';
+}
+
+function holeIndex() { return state.step - 1; }
+
+function render() {
+  updateProgress();
+  const s = state.step;
+  const content = document.getElementById('screenContent');
+  const nav = document.getElementById('navBar');
+
+  if (subScreen && subScreen.type === 'birdies') {
+    renderBirdieScreen(content, nav, subScreen.holeIdx);
+    return;
+  }
+  if (subScreen && subScreen.type === 'lonewolf') {
+    renderLoneWolfScreen(content, nav, subScreen.holeIdx);
+    return;
+  }
+
+  if (s === 0) renderRoundInfo(content, nav);
+  else if (s >= 1 && s <= 18) renderHole(content, nav, s - 1);
+  else if (s === 19) renderSummary(content, nav);
+}
+
+function chip(label, value, field, multi) {
+  const active = state[field] === value;
+  return `<div class="chip${active?' active':''}" onclick="state['${field}']='${value}';render()">${label}</div>`;
+}
+
+function renderRoundInfo(el, nav) {
+  el.innerHTML = `
+    <div class="screen-title">Round info</div>
+    <div class="screen-desc">Tell us about today's game.</div>
+    <div class="field">
+      <label>Date</label>
+      <input type="date" id="f-date" value="${state.date}" onchange="state.date=this.value">
+    </div>
+    <div class="field">
+      <label>Course</label>
+      <input type="text" id="f-course" placeholder="e.g. LR, KS" value="${state.course}" oninput="state.course=this.value.toUpperCase()" maxlength="10">
+    </div>
+    <div class="field">
+      <label>Tees</label>
+      <div class="chip-group">
+        ${['Blue','Green','White','Red','Black'].map(t => chip(t,t,'tees')).join('')}
+      </div>
+    </div>
+    <div class="field">
+      <label>Players</label>
+      <div class="chip-group">
+        ${['3','4','5'].map(n => chip(n,n,'players')).join('')}
+      </div>
+    </div>
+  `;
+  nav.innerHTML = `<button class="btn-next" onclick="goNext()" ${canAdvanceRoundInfo()?'':'disabled'}>Next &rarr;</button>`;
+}
+
+function canAdvanceRoundInfo() {
+  return state.date && state.course && state.tees && state.players;
+}
+
+function renderHole(el, nav, idx) {
+  const h = state.holes[idx];
+  const results = [
+    {val:'win', label:'Win', icon:'&#9651;'},
+    {val:'tied-win', label:'Tied win', icon:'&#9651;&#9651;'},
+    {val:'tie', label:'Tie', icon:'&#9135;'},
+    {val:'loss', label:'Loss', icon:'&#9661;'},
+    {val:'sidecar', label:'Sidecar', icon:'&#9678;'},
+    {val:'no-result', label:'No result', icon:'&#8208;'}
+  ];
+  const showDots = h.result === 'win' || h.result === 'tied-win';
+  const showSidecarDots = h.result === 'sidecar';
+
+  const wolfResults = [
+    {val:'win', label:'Win'},
+    {val:'tie', label:'Tie'},
+    {val:'loss', label:'Loss'}
+  ];
+
+  el.innerHTML = `
+    <div class="hole-badge">${idx+1}</div>
+    <div class="screen-title">Hole ${idx+1}</div>
+    <div class="screen-desc">What happened on this hole?</div>
+    <div class="result-grid">
+      ${results.map(r => `
+        <div class="result-card${h.result===r.val?' active':''}" onclick="setHoleResult(${idx},'${r.val}')">
+          <span class="result-icon">${r.icon}</span>${r.label}
+        </div>`).join('')}
+    </div>
+    ${showDots ? `
+      <div class="dots-field">
+        <label>Dots ${h.result==='tied-win'?'(tied win)':'(win)'}</label>
+        <input type="number" inputmode="numeric" placeholder="0" value="${h.dots}" oninput="state.holes[${idx}].dots=this.value">
+      </div>` : ''}
+    ${showSidecarDots ? `
+      <div class="dots-field">
+        <label>Sidecar points (from partner's win)</label>
+        <input type="number" inputmode="numeric" placeholder="0" value="${h.sidecarDots}" oninput="state.holes[${idx}].sidecarDots=this.value">
+      </div>` : ''}
+
+    <div class="section-divider">Birdies</div>
+    ${birdieButton(idx)}
+
+    <div class="section-divider">Wolf Selector</div>
+    <div class="sidecar-toggle" onclick="toggleWolf(${idx})">
+      <span>Were you the Wolf selector?</span>
+      <div class="toggle-switch${h.wasWolf?' on':''}"></div>
+    </div>
+    ${h.wasWolf ? `
+      <div class="wolf-result-grid" style="margin-top:10px">
+        ${wolfResults.map(r => `
+          <div class="wolf-result-card${h.wolfResult===r.val?' active':''}" onclick="state.holes[${idx}].wolfResult='${r.val}';render()">${r.label}</div>
+        `).join('')}
+      </div>
+    ` : ''}
+
+    <div class="section-divider">Lone Wolf</div>
+    <div class="sidecar-toggle" onclick="toggleLoneWolf(${idx})">
+      <span>Did you go lone wolf?</span>
+      <div class="toggle-switch${h.isLoneWolf?' on':''}"></div>
+    </div>
+    ${h.isLoneWolf ? `
+      <div style="margin-top:10px">${loneWolfButton(idx)}</div>
+    ` : ''}
+  `;
+  nav.innerHTML = `
+    <button class="btn-back" onclick="goBack()">Back</button>
+    <button class="btn-next" onclick="goNext()" ${h.result?'':'disabled'}>Next &rarr;</button>
+  `;
+}
+
+function birdieCount(h) {
+  let n = 0;
+  if (h.iBirdie) n++;
+  if (h.partnerBirdie) n++;
+  if (h.opponentBirdie) n++;
+  return n;
+}
+
+function birdieButton(idx) {
+  const h = state.holes[idx];
+  const count = birdieCount(h);
+  const label = count === 0 ? 'No birdies — tap to add' : `${count} birdie${count>1?'s':''} added — tap to edit`;
+  return `
+    <div class="sidecar-toggle" onclick="openBirdieScreen(${idx})" style="${count>0?'border-color:var(--green-light);':''}">
+      <span>${label}</span>
+      <span style="font-size:16px;color:var(--text-muted)">&rsaquo;</span>
+    </div>
+  `;
+}
+
+function openBirdieScreen(idx) {
+  subScreen = { type: 'birdies', holeIdx: idx };
+  render();
+  window.scrollTo(0,0);
+}
+
+function closeBirdieScreen() {
+  subScreen = null;
+  render();
+  window.scrollTo(0,0);
+}
+
+function renderBirdieScreen(el, nav, idx) {
+  const h = state.holes[idx];
+  const options = [
+    { flag: 'iBirdie', pts: 'iBirdiePts', label: 'Mine' },
+    { flag: 'partnerBirdie', pts: 'partnerBirdiePts', label: "Partner's" },
+    { flag: 'opponentBirdie', pts: 'opponentBirdiePts', label: "Opponent's" }
+  ];
+  el.innerHTML = `
+    <div class="hole-badge">${idx+1}</div>
+    <div class="screen-title">Birdies — Hole ${idx+1}</div>
+    <div class="screen-desc">Select who birdied this hole. More than one can apply.</div>
+    <div class="chip-group">
+      ${options.map(o => `
+        <div class="chip${h[o.flag]?' active':''}" onclick="toggleBirdieChip(${idx},'${o.flag}','${o.pts}')">${o.label}</div>
+      `).join('')}
+    </div>
+    ${options.filter(o => h[o.flag]).map(o => `
+      <div class="birdie-points-input" style="margin-top:16px" onclick="openNumpad(${idx},'${o.pts}')">
+        <label>${o.label} points</label>
+        <div style="font-size:22px;font-family:'DM Serif Display',serif;color:var(--green);text-align:right;">${h[o.pts] || '0'}</div>
+      </div>
+    `).join('')}
+  `;
+  nav.innerHTML = `
+    <button class="btn-next" onclick="closeBirdieScreen()">Back to hole &rarr;</button>
+  `;
+}
+
+function toggleBirdieChip(idx, flagField, ptsField) {
+  state.holes[idx][flagField] = !state.holes[idx][flagField];
+  if (state.holes[idx][flagField]) {
+    render();
+    openNumpad(idx, ptsField);
+  } else {
+    state.holes[idx][ptsField] = '';
+    render();
+  }
+}
+
+function toggleWolf(idx) {
+  state.holes[idx].wasWolf = !state.holes[idx].wasWolf;
+  if (!state.holes[idx].wasWolf) {
+    state.holes[idx].wolfResult = '';
+  }
+  render();
+}
+
+function toggleLoneWolf(idx) {
+  state.holes[idx].isLoneWolf = !state.holes[idx].isLoneWolf;
+  if (!state.holes[idx].isLoneWolf) {
+    state.holes[idx].loneWolfResult = '';
+    state.holes[idx].loneWolfPts = '';
+  }
+  render();
+}
+
+function loneWolfButton(idx) {
+  const h = state.holes[idx];
+  const set = h.loneWolfResult;
+  const label = !set ? 'Lone wolf points — tap to add' : `Lone wolf: ${set} — ${h.loneWolfPts||0} pts — tap to edit`;
+  return `
+    <div class="sidecar-toggle" onclick="openLoneWolfScreen(${idx})" style="${set?'border-color:var(--gold);':''}">
+      <span>${label}</span>
+      <span style="font-size:16px;color:var(--text-muted)">&rsaquo;</span>
+    </div>
+  `;
+}
+
+function openLoneWolfScreen(idx) {
+  subScreen = { type: 'lonewolf', holeIdx: idx };
+  render();
+  window.scrollTo(0,0);
+}
+
+function closeLoneWolfScreen() {
+  subScreen = null;
+  render();
+  window.scrollTo(0,0);
+}
+
+function renderLoneWolfScreen(el, nav, idx) {
+  const h = state.holes[idx];
+  const results = [
+    {val:'win', label:'Win'},
+    {val:'tie', label:'Tie'},
+    {val:'loss', label:'Loss'}
+  ];
+  el.innerHTML = `
+    <div class="hole-badge">${idx+1}</div>
+    <div class="screen-title">Lone wolf — Hole ${idx+1}</div>
+    <div class="screen-desc">You played the whole field alone on this hole. What happened, and how many points?</div>
+    <div class="wolf-result-grid">
+      ${results.map(r => `
+        <div class="wolf-result-card${h.loneWolfResult===r.val?' active':''}" onclick="state.holes[${idx}].loneWolfResult='${r.val}';render()">${r.label}</div>
+      `).join('')}
+    </div>
+    ${h.loneWolfResult ? `
+      <div class="birdie-points-input" style="margin-top:16px" onclick="openNumpad(${idx},'loneWolfPts')">
+        <label>Points (doubled value)</label>
+        <div style="font-size:22px;font-family:'DM Serif Display',serif;color:var(--green);text-align:right;">${h.loneWolfPts || '0'}</div>
+      </div>
+    ` : ''}
+  `;
+  nav.innerHTML = `
+    <button class="btn-next" onclick="closeLoneWolfScreen()">Back to hole &rarr;</button>
+  `;
+}
+
+function openNumpad(idx, field) {
+  numpadTarget = { idx, field };
+  renderNumpad();
+}
+
+function renderNumpad() {
+  if (!numpadTarget) return;
+  const { idx, field } = numpadTarget;
+  const current = state.holes[idx][field] || '';
+  let overlay = document.getElementById('numpadOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'numpadOverlay';
+    overlay.className = 'loading-overlay';
+    overlay.style.background = 'rgba(26,58,42,0.92)';
+    document.body.appendChild(overlay);
+  }
+  const keys = ['1','2','3','4','5','6','7','8','9','clear','0','done'];
+  overlay.innerHTML = `
+    <div style="background:var(--cream);border-radius:16px;padding:20px;width:260px;">
+      <div class="numpad-display" style="color:var(--green)">${current || '0'}</div>
+      <div class="numpad-grid">
+        ${keys.map(k => {
+          if (k === 'clear') return `<div class="numpad-key clear" onclick="numpadInput('clear')">Clear</div>`;
+          if (k === 'done') return `<div class="numpad-key" style="background:var(--green);color:var(--gold-light);" onclick="numpadInput('done')">Done</div>`;
+          return `<div class="numpad-key" onclick="numpadInput('${k}')">${k}</div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function numpadInput(key) {
+  if (!numpadTarget) return;
+  const { idx, field } = numpadTarget;
+  let current = state.holes[idx][field] || '';
+  if (key === 'clear') {
+    current = '';
+  } else if (key === 'done') {
+    const overlay = document.getElementById('numpadOverlay');
+    if (overlay) overlay.remove();
+    numpadTarget = null;
+    render();
+    return;
+  } else {
+    current = (current === '0' ? '' : current) + key;
+  }
+  state.holes[idx][field] = current;
+  renderNumpad();
+}
+
+function setHoleResult(idx, val) {
+  state.holes[idx].result = val;
+  if (val === 'tie' || val === 'loss') { state.holes[idx].dots = ''; }
+  if (val !== 'sidecar') { state.holes[idx].sidecarDots = ''; }
+  if (val !== 'win' && val !== 'tied-win') { state.holes[idx].dots = ''; }
+  render();
+}
+
+function calcTotals() {
+  const h = state.holes;
+  const t = {
+    wins: 0, tiedWins: 0, ties: 0, losses: 0, sidecars: 0, noResults: 0,
+    winDots: 0, tiedDots: 0, sidecarDots: 0,
+    iBirdies: 0, iBirdiePts: 0,
+    partnerBirdies: 0, partnerBirdiePts: 0,
+    opponentBirdies: 0, opponentBirdiePts: 0,
+    wolfHoles: 0, wolfWin: 0, wolfTie: 0, wolfLoss: 0,
+    loneWolfCount: 0, loneWolfWin: 0, loneWolfTie: 0, loneWolfLoss: 0, loneWolfPts: 0
+  };
+  h.forEach(x => {
+    if (x.result === 'win') { t.wins++; t.winDots += parseInt(x.dots||0); }
+    if (x.result === 'tied-win') { t.tiedWins++; t.tiedDots += parseInt(x.dots||0); }
+    if (x.result === 'tie') t.ties++;
+    if (x.result === 'loss') t.losses++;
+    if (x.result === 'no-result') t.noResults++;
+    if (x.result === 'sidecar') { t.sidecars++; t.sidecarDots += parseInt(x.sidecarDots||0); }
+    if (x.iBirdie) { t.iBirdies++; t.iBirdiePts += parseInt(x.iBirdiePts||0); }
+    if (x.partnerBirdie) { t.partnerBirdies++; t.partnerBirdiePts += parseInt(x.partnerBirdiePts||0); }
+    if (x.opponentBirdie) { t.opponentBirdies++; t.opponentBirdiePts += parseInt(x.opponentBirdiePts||0); }
+    if (x.wasWolf) {
+      t.wolfHoles++;
+      if (x.wolfResult === 'win') t.wolfWin++;
+      if (x.wolfResult === 'tie') t.wolfTie++;
+      if (x.wolfResult === 'loss') t.wolfLoss++;
+      if (x.isLoneWolf && x.loneWolfResult) {
+        t.loneWolfCount++;
+        t.loneWolfPts += parseInt(x.loneWolfPts||0);
+        if (x.loneWolfResult === 'win') t.loneWolfWin++;
+        if (x.loneWolfResult === 'tie') t.loneWolfTie++;
+        if (x.loneWolfResult === 'loss') t.loneWolfLoss++;
+      }
+    }
+  });
+  t.wolfWinPct = t.wolfHoles > 0 ? Math.round((t.wolfWin / t.wolfHoles) * 100) : 0;
+  t.loneWolfWinPct = t.loneWolfCount > 0 ? Math.round((t.loneWolfWin / t.loneWolfCount) * 100) : 0;
+  return t;
+}
+
+function renderSummary(el, nav) {
+  const t = calcTotals();
+
+  el.innerHTML = `
+    <div class="screen-title">Review round</div>
+    <div class="screen-desc">Totals below are calculated from your hole-by-hole entries. Confirm before submitting.</div>
+    <div class="summary-card">
+      <h3>Round info</h3>
+      <div class="summary-line"><span>Date</span><span class="val">${state.date}</span></div>
+      <div class="summary-line"><span>Course</span><span class="val">${state.course}</span></div>
+      <div class="summary-line"><span>Tees</span><span class="val">${state.tees}</span></div>
+      <div class="summary-line"><span>Players</span><span class="val">${state.players}</span></div>
+    </div>
+    <div class="summary-card">
+      <h3>Hole results</h3>
+      <div class="summary-line"><span>Wins</span><span class="val">${t.wins} holes · ${t.winDots} dots</span></div>
+      <div class="summary-line"><span>Tied wins</span><span class="val">${t.tiedWins} holes · ${t.tiedDots} dots</span></div>
+      <div class="summary-line"><span>Ties</span><span class="val">${t.ties} holes</span></div>
+      <div class="summary-line"><span>Losses</span><span class="val">${t.losses} holes</span></div>
+      <div class="summary-line"><span>No result (team tie, not my ball)</span><span class="val">${t.noResults} holes</span></div>
+      <div class="summary-line"><span>Sidecar wins</span><span class="val">${t.sidecars} holes · ${t.sidecarDots} dots</span></div>
+    </div>
+    <div class="summary-card">
+      <h3>Birdies</h3>
+      <div class="summary-line"><span>Mine</span><span class="val">${t.iBirdies} · ${t.iBirdiePts} pts</span></div>
+      <div class="summary-line"><span>Partner's</span><span class="val">${t.partnerBirdies} · ${t.partnerBirdiePts} pts</span></div>
+      <div class="summary-line"><span>Opponent's</span><span class="val">${t.opponentBirdies} · ${t.opponentBirdiePts} pts</span></div>
+    </div>
+    <div class="summary-card">
+      <h3>Wolf Selector</h3>
+      <div class="summary-line"><span>Holes as Wolf selector</span><span class="val">${t.wolfHoles}</span></div>
+      <div class="summary-line"><span>Won / Tie / Loss</span><span class="val">${t.wolfWin} / ${t.wolfTie} / ${t.wolfLoss}</span></div>
+      <div class="summary-line"><span>Win rate as selector</span><span class="val">${t.wolfWinPct}%</span></div>
+    </div>
+    <div class="summary-card">
+      <h3>Lone Wolf</h3>
+      <div class="summary-line"><span>Times gone lone wolf</span><span class="val">${t.loneWolfCount}</span></div>
+      <div class="summary-line"><span>Won / Tie / Loss</span><span class="val">${t.loneWolfWin} / ${t.loneWolfTie} / ${t.loneWolfLoss}</span></div>
+      <div class="summary-line"><span>Win rate lone wolf</span><span class="val">${t.loneWolfWinPct}%</span></div>
+      <div class="summary-line"><span>Total points</span><span class="val">${t.loneWolfPts}</span></div>
+    </div>
+  `;
+  nav.innerHTML = `
+    <button class="btn-back" onclick="goBack()">Back</button>
+    <button class="btn-submit" onclick="submitRound()">Submit round</button>
+  `;
+}
+
+function goNext() {
+  if (state.step === 0 && !canAdvanceRoundInfo()) return;
+  if (state.step < TOTAL_STEPS - 1) { state.step++; render(); window.scrollTo(0,0); }
+}
+
+function goBack() {
+  if (state.step > 0) { state.step--; render(); window.scrollTo(0,0); }
+}
+
+function buildRow() {
+  const row = [
+    state.date, state.course, state.tees, state.players,
+    1  // Rounds Played — always 1, for counting
+  ];
+  for (let i = 0; i < 18; i++) {
+    const h = state.holes[i];
+    row.push(h.result === 'win' ? 1 : '');
+    row.push(h.result === 'win' ? (parseInt(h.dots)||0) : '');
+    row.push(h.result === 'tie' ? 1 : '');
+    row.push(h.result === 'tied-win' ? 1 : '');
+    row.push(h.result === 'tied-win' ? (parseInt(h.dots)||0) : '');
+    row.push(h.result === 'loss' ? 1 : '');
+    row.push(h.result === 'no-result' ? 1 : '');
+    row.push(h.result === 'sidecar' ? 1 : '');
+    row.push(h.result === 'sidecar' ? (parseInt(h.sidecarDots)||0) : '');
+    row.push(h.iBirdie ? 1 : '');
+    row.push(h.iBirdie ? (parseInt(h.iBirdiePts)||0) : '');
+    row.push(h.partnerBirdie ? 1 : '');
+    row.push(h.partnerBirdie ? (parseInt(h.partnerBirdiePts)||0) : '');
+    row.push(h.opponentBirdie ? 1 : '');
+    row.push(h.opponentBirdie ? (parseInt(h.opponentBirdiePts)||0) : '');
+    row.push(h.wasWolf ? 1 : '');
+    row.push(h.wasWolf && h.wolfResult === 'win' ? 1 : '');
+    row.push(h.wasWolf && h.wolfResult === 'tie' ? 1 : '');
+    row.push(h.wasWolf && h.wolfResult === 'loss' ? 1 : '');
+    row.push(h.isLoneWolf ? 1 : '');
+    row.push(h.isLoneWolf && h.loneWolfResult === 'win' ? 1 : '');
+    row.push(h.isLoneWolf && h.loneWolfResult === 'tie' ? 1 : '');
+    row.push(h.isLoneWolf && h.loneWolfResult === 'loss' ? 1 : '');
+    row.push(h.isLoneWolf ? (parseInt(h.loneWolfPts)||0) : '');
+  }
+  return row;
+}
+
+function submitRound() {
+  const overlay = document.createElement('div');
+  overlay.className = 'loading-overlay';
+  overlay.innerHTML = '<div class="spinner"></div><div>Saving round...</div>';
+  document.body.appendChild(overlay);
+
+  const payload = JSON.stringify({ row: buildRow() });
+  const formData = new FormData();
+  formData.append('data', payload);
+
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: formData
+  })
+  .then(() => {
+    overlay.remove();
+    showSuccess();
+  })
+  .catch(() => {
+    overlay.remove();
+    showError('Could not connect. Check your internet and try again.');
+  });
+}
+
+function showSuccess() {
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('screenContent').innerHTML = `
+    <div class="success-screen">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h2>Round saved!</h2>
+      <p>Your round has been added to the Wolf Stats spreadsheet.</p>
+      <button class="btn-new-round" onclick="resetApp()">Enter another round</button>
+    </div>
+  `;
+  document.getElementById('navBar').innerHTML = '';
+}
+
+function showError(msg) {
+  const nav = document.getElementById('navBar');
+  nav.innerHTML = `
+    <div style="width:100%">
+      <div class="error-msg" style="margin-bottom:8px;text-align:center">${msg}</div>
+      <div style="display:flex;gap:10px">
+        <button class="btn-back" onclick="goBack()">Back</button>
+        <button class="btn-submit" onclick="submitRound()">Retry</button>
+      </div>
+    </div>
+  `;
+}
+
+function resetApp() {
+  state.step = 0;
+  state.date = ''; state.course = ''; state.tees = ''; state.players = '';
+  state.holes = Array.from({length:18},()=>({
+    result:'', dots:'', sidecarDots:'',
+    iBirdie:false, iBirdiePts:'',
+    partnerBirdie:false, partnerBirdiePts:'',
+    opponentBirdie:false, opponentBirdiePts:'',
+    wasWolf:false, wolfResult:'',
+    isLoneWolf:false, loneWolfResult:'', loneWolfPts:''
+  }));
+  subScreen = null;
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
